@@ -17,21 +17,54 @@
  */
 
 #include <codeslayer/codeslayer.h>
+#include "wordcompletion-provider.h"
 #include <gtk/gtk.h>
 #include <gmodule.h>
 #include <glib.h>
 
-G_MODULE_EXPORT void activate          (CodeSlayer       *codeslayer);
-G_MODULE_EXPORT void deactivate        (CodeSlayer       *codeslayer);
+G_MODULE_EXPORT void activate             (CodeSlayer       *codeslayer);
+G_MODULE_EXPORT void deactivate           (CodeSlayer       *codeslayer);
+
+static void          editor_added_action  (CodeSlayer       *codeslayer, 
+                                           CodeSlayerEditor *editor);
+                                                                                      
+gulong editor_added_id;
 
 G_MODULE_EXPORT void
 activate (CodeSlayer *codeslayer)
 {
-  g_print ("Activate the word completion plugin\n");
+  GList *editors;
+  GList *tmp;
+
+  editors = codeslayer_get_all_editors (codeslayer);
+  
+  tmp = editors;
+  
+  while (tmp != NULL)
+    {
+      CodeSlayerEditor *editor = tmp->data;
+      editor_added_action (codeslayer, editor);
+      tmp = g_list_next (tmp);
+    }
+    
+  g_list_free (editors);
+  
+  editor_added_id = g_signal_connect_swapped (G_OBJECT (codeslayer), "editor-added",
+                                              G_CALLBACK (editor_added_action), NULL);
 }
 
 G_MODULE_EXPORT void 
 deactivate (CodeSlayer *codeslayer)
 {
-  g_print ("Deactivate the word completion plugin\n");
+  g_signal_handler_disconnect (codeslayer, editor_added_id);
+}
+
+static void
+editor_added_action (CodeSlayer       *codeslayer, 
+                     CodeSlayerEditor *editor)
+{
+  WordCompletionProvider *provider;
+  provider = word_completion_provider_new (editor);
+  codeslayer_editor_add_completion_provider (editor, 
+                                             CODESLAYER_COMPLETION_PROVIDER (provider));
 }
