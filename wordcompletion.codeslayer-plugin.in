@@ -1,0 +1,8 @@
+[plugin]
+lib=libwordcompletioncodeslayerplugin
+version=@PACKAGE_VERSION@
+name=Word Completion
+description=A plugin to complete words in the editor.
+authors=Jeff Johnston <jeff.johnston.mn@gmail.com>
+copyright=Copyright © 2011 Jeff Johnston
+website=http://codeslayer.org
