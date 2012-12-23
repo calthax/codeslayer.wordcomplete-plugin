@@ -30,7 +30,6 @@ static GList* find_matches                           (gchar                     
                                                       gchar                        *word);
 static gint compare_match                            (gchar                        *a,
                                                       gchar                        *b);
-static gboolean has_match                            (GtkTextIter                   start);
 static void move_iter_word_start                     (GtkTextIter                  *iter);
 static gchar* get_text_to_search                     (GtkTextView                  *text_view, 
                                                       GtkTextIter                   iter);
@@ -94,7 +93,7 @@ word_completion_provider_new (CodeSlayerEditor *editor)
 
 static GList* 
 word_completion_get_proposals (WordCompletionProvider *provider, 
-                               GtkTextIter         iter)
+                               GtkTextIter             iter)
 {
   WordCompletionProviderPrivate *priv;
   GList *proposals = NULL;
@@ -111,16 +110,12 @@ word_completion_get_proposals (WordCompletionProvider *provider,
   start = iter;
   move_iter_word_start (&start);
   
-  if (!has_match (start))
-    return NULL;
-
   start_word = gtk_text_iter_get_text (&start, &iter);
   
   if (!codeslayer_utils_has_text (start_word))
     {    
       if (start_word != NULL)
-        g_free (start_word);
-    
+        g_free (start_word);    
       return NULL;
     }
 
@@ -152,34 +147,6 @@ word_completion_get_proposals (WordCompletionProvider *provider,
   g_free (text);
 
   return proposals;
-}
-
-static gboolean
-has_match (GtkTextIter start)
-{
-  gboolean result = TRUE;
-  GtkTextIter prev;
-  GtkTextIter next;
-  gchar *prev_text;
-  gchar *next_text;
-  
-  prev = start;
-  next = start;
-
-  gtk_text_iter_backward_char (&prev);
-  gtk_text_iter_forward_char (&next);
-
-  prev_text = gtk_text_iter_get_text (&prev, &start);
-  next_text = gtk_text_iter_get_text (&start, &next);    
-  
-  if (g_strcmp0 (prev_text, ".") == 0 || 
-      g_ascii_isupper (*next_text)) 
-    result = FALSE;
-    
-  g_free (prev_text);
-  g_free (next_text);
-
-  return result;
 }
 
 static GList*
@@ -233,14 +200,17 @@ compare_match (gchar *a,
 static void
 move_iter_word_start (GtkTextIter *iter)
 {
-  if (!gtk_text_iter_inside_word (iter) && !gtk_text_iter_ends_word (iter))
-    return;
+  gunichar ctext;
+  gtk_text_iter_backward_char (iter);
+  ctext = gtk_text_iter_get_char (iter);
+  
+  while (g_ascii_isalnum (ctext) || ctext == '_')
+    {
+      gtk_text_iter_backward_char (iter);
+      ctext = gtk_text_iter_get_char (iter);
+    }
     
-  if (gtk_text_iter_starts_word (iter))
-    return;
-    
-  while (!gtk_text_iter_starts_word (iter))
-    gtk_text_iter_backward_char (iter);
+  gtk_text_iter_forward_char (iter);    
 }
 
 static gchar*
@@ -250,13 +220,7 @@ get_text_to_search (GtkTextView *text_view,
   GtkTextBuffer *buffer;
   GtkTextIter start;
   GtkTextIter end;
-  gchar *text;      
-
   buffer = gtk_text_view_get_buffer (text_view);      
-  
   gtk_text_buffer_get_bounds (buffer, &start, &end);
-
-  text = gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
-
-  return text;
+  return gtk_text_buffer_get_text (buffer, &start, &end, FALSE);
 }
