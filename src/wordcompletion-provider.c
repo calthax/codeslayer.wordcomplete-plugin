@@ -159,7 +159,7 @@ find_matches (gchar *text,
   GMatchInfo *match_info;
   GError *error = NULL;
   
-  concat = g_strconcat ("(\\s", word, "[a-zA-Z0-9_]+)", NULL);
+  concat = g_strconcat ("(\\s|\\*)(", word, "[a-zA-Z0-9_]*)", NULL);
   
   regex = g_regex_new (concat, 0, 0, NULL);
   
@@ -168,11 +168,14 @@ find_matches (gchar *text,
   while (g_match_info_matches (match_info))
     {
       gchar *match_text = NULL;
-      match_text = g_match_info_fetch (match_info, 0);
+      match_text = g_match_info_fetch (match_info, 2);
       
-      if (g_list_find_custom (results, match_text, (GCompareFunc) compare_match) == NULL)
-        results = g_list_prepend (results, g_strdup (match_text));
-        
+      if (g_strcmp0 (word, match_text) != 0)
+      {
+        if (g_list_find_custom (results, match_text, (GCompareFunc) compare_match) == NULL)
+          results = g_list_prepend (results, g_strdup (match_text));
+      }
+
       g_free (match_text);
       g_match_info_next (match_info, &error);
     }
