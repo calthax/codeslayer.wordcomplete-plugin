@@ -159,7 +159,7 @@ find_matches (gchar *text,
   GMatchInfo *match_info;
   GError *error = NULL;
   
-  concat = g_strconcat ("(\\s|\\*)(", word, "[a-zA-Z0-9_]*)", NULL);
+  concat = g_strconcat ("(\\s|\\*|\\()(", word, "[a-zA-Z0-9_]*)", NULL);
   
   regex = g_regex_new (concat, 0, 0, NULL);
   
