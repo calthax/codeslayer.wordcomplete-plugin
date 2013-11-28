@@ -45,7 +45,7 @@ struct _WordCompletionProviderClass
 
 GType word_completion_provider_get_type (void) G_GNUC_CONST;
 
-WordCompletionProvider*  word_completion_provider_new  (CodeSlayerEditor *editor);
+WordCompletionProvider*  word_completion_provider_new  (CodeSlayerDocument *document);
 
 G_END_DECLS
 

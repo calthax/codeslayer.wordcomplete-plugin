@@ -41,7 +41,7 @@ typedef struct _WordCompletionProviderPrivate WordCompletionProviderPrivate;
 
 struct _WordCompletionProviderPrivate
 {
-  CodeSlayerEditor *editor;
+  CodeSlayerDocument *document;
 };
 
 G_DEFINE_TYPE_EXTENDED (WordCompletionProvider,
@@ -79,14 +79,14 @@ word_completion_provider_finalize (WordCompletionProvider *provider)
 }
 
 WordCompletionProvider*
-word_completion_provider_new (CodeSlayerEditor *editor)
+word_completion_provider_new (CodeSlayerDocument *document)
 {
   WordCompletionProviderPrivate *priv;
   WordCompletionProvider *provider;
 
   provider = WORD_COMPLETION_PROVIDER (g_object_new (word_completion_provider_get_type (), NULL));
   priv = WORD_COMPLETION_PROVIDER_GET_PRIVATE (provider);
-  priv->editor = editor;
+  priv->document = document;
 
   return provider;
 }
@@ -97,6 +97,7 @@ word_completion_get_proposals (WordCompletionProvider *provider,
 {
   WordCompletionProviderPrivate *priv;
   GList *proposals = NULL;
+  GtkTextView *text_view;
   GtkTextBuffer *buffer;
   GtkTextMark *mark;
   GList *list = NULL;
@@ -119,10 +120,11 @@ word_completion_get_proposals (WordCompletionProvider *provider,
       return NULL;
     }
 
-  buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (priv->editor));
+  text_view = GTK_TEXT_VIEW (codeslayer_document_get_source_view (priv->document));
+  buffer = gtk_text_view_get_buffer (text_view);
   mark = gtk_text_buffer_create_mark (buffer, NULL, &start, TRUE);
 
-  text = get_text_to_search (GTK_TEXT_VIEW (priv->editor), start);
+  text = get_text_to_search (text_view, start);
   list = find_matches (text, start_word);
   tmp = list;
 
@@ -218,7 +220,7 @@ move_iter_word_start (GtkTextIter *iter)
 
 static gchar*
 get_text_to_search (GtkTextView *text_view, 
-                               GtkTextIter  iter)
+                    GtkTextIter  iter)
 {
   GtkTextBuffer *buffer;
   GtkTextIter start;
